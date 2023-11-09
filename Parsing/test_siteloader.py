@@ -1,0 +1,3 @@
+from SiteLoader import *
+parseAll()
+
