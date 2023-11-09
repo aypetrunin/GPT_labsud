@@ -1,0 +1,125 @@
+{
+  "services": [
+    {
+      "number": "I",
+      "name": "Составления акта осмотра (повреждений)",
+      "independent_expertise_car_price": {
+        "1_position": 1050,
+        "2_3_positions": 1150,
+        "4_5_positions": 1350,
+        "6_10_positions": 1550,
+        "11_20_positions": 1750,
+        "21_30_positions": 2000,
+        "31_40_positions": 2300,
+        "41_50_positions": 2750,
+        "51_60_positions": 3000,
+        "61_positions_and_more": 3500
+      },
+      "judicial_expertise_car_price": {
+        "1_position": 2100,
+        "2_3_positions": 2300,
+        "4_5_positions": 2700,
+        "6_10_positions": 3100,
+        "11_20_positions": 3500,
+        "21_30_positions": 4000,
+        "31_40_positions": 4600,
+        "41_50_positions": 5500,
+        "51_60_positions": 6000,
+        "61_positions_and_more": 7000
+      },
+      "independent_expertise_truck_bus_price": {
+        "1_position": 1200,
+        "2_3_positions": 1350,
+        "4_5_positions": 1450,
+        "6_10_positions": 2000,
+        "11_20_positions": 2300,
+        "21_30_positions": 2550,
+        "31_40_positions": 3100,
+        "41_50_positions": 3400,
+        "51_60_positions": 3900,
+        "61_positions_and_more": 4650
+      },
+      "judicial_expertise_truck_bus_price": {
+        "1_position": 2400,
+        "2_3_positions": 2700,
+        "4_5_positions": 2900,
+        "6_10_positions": 4000,
+        "11_20_positions": 4600,
+        "21_30_positions": 5100,
+        "31_40_positions": 6200,
+        "41_50_positions": 6800,
+        "51_60_positions": 7800,
+        "61_positions_and_more": 9300
+      }
+    },
+    {
+      "number": "II",
+      "name": "Расчет стоимости ремонта автотранспортного средства, подготовка заключения",
+      "repair_calculation_car_price": {
+        "1_position": 1700,
+        "2_3_positions": 1950,
+        "4_5_positions": 2300,
+        "6_10_positions": 3050,
+        "11_20_positions": 3700,
+        "21_30_positions": 4250,
+        "31_40_positions": 4850,
+        "41_50_positions": 5600,
+        "51_60_positions": 6150,
+        "61_positions_and_more": 6950
+      },
+      "repair_calculation_truck_bus_price": {
+        "1_position": 1850,
+        "2_3_positions": 2550,
+        "4_5_positions": 3050,
+        "6_10_positions": 3750,
+        "11_20_positions": 4750,
+        "21_30_positions": 5600,
+        "31_40_positions": 6150,
+        "41_50_positions": 7250,
+        "51_60_positions": 8250,
+        "61_positions_and_more": 9100
+      },
+      "judicial_expertise_car_price": {
+        "1_position": 5000,
+        "2_3_positions": 7000,
+        "4_5_positions": 7000,
+        "6_10_positions": 9000,
+        "11_20_positions": 10000,
+        "21_30_positions": 12000,
+        "31_40_positions": 14000,
+        "41_50_positions": 15000,
+        "51_60_positions": 15000,
+        "61_positions_and_more": 17000
+      },
+      "judicial_expertise_truck_bus_price": {
+        "1_position": 5000,
+        "2_3_positions": 8000,
+        "4_5_positions": 8000,
+        "6_10_positions": 10000,
+        "11_20_positions": 11000,
+        "21_30_positions": 13000,
+        "31_40_positions": 15000,
+        "41_50_positions": 16000,
+        "51_60_positions": 16000,
+        "61_positions_and_more": 18000
+      }
+    },
+    {
+      "number": "III",
+      "name": "Прочие расчеты",
+      "loss_of_market_value_price": {
+        "car_price": 3000,
+        "truck_bus_price": 3650
+      },
+      "market_value_determination_price": {
+        "car_price": 4300,
+        "truck_bus_price": 5500
+      },
+      "discrepancies_calculation_price": 1500,
+      "residual_value_calculation_price": {
+        "car_price": 3000,
+        "truck_bus_price": 3500
+      }
+    }
+  ]
+}
