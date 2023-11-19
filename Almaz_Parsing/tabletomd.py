@@ -1,3 +1,5 @@
+# преобразование таблицы json в md для деления на чанки
+
 import json
 import tableLoader
 

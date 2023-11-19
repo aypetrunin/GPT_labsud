@@ -1,7 +1,10 @@
+# преобразование таблицы html в json
+
 from bs4 import BeautifulSoup
 import json
 
 class TableGroup:
+    '''Разделы таблицы'''
     def __init__(self, name) -> None:
         self.name=name
         self.body = []
@@ -54,6 +57,7 @@ class TableGroup:
         
 
 class TableLoader:
+    '''преобразование таблицы html в json'''
     def __init__(self, html_table) -> None:
         self.html_table = html_table
         self.soup = BeautifulSoup(html_table, 'html.parser')
