@@ -6,7 +6,8 @@ url_site_map = f'{url}/sitemap.xml'
 path_content = "data"
 
 def readFile(num):
-    filename = f'{path_content}/{num}.html'
+    name = dpages[num]
+    filename = f'{path_content}/html/{name}.html'
     with open(filename,"r",encoding="utf-8") as f:
         text = f.read()    
     return text
@@ -22,25 +23,91 @@ def readPages():
 
 def saveDocs(docs):
     for i, e in enumerate(docs):
-        num = str(i).rjust(2,"0")
-        filename = f'{path_content}/{num}.html'
+        # num = str(i).rjust(2,"0")
+        num = dpages[i] #str(i).rjust(2,"0")
+        filename = f'{path_content}/html/{num}.html'
         if not os.path.exists(filename):
             with open(filename,"w", encoding="utf-8") as f:
                 f.write(str(e))
 
+def saveDocs_toload(docs, docstoload):
+    for i, e in enumerate(docs):
+        # num = str(i).rjust(2,"0")
+        num = docstoload[i] #str(i).rjust(2,"0")
+        filename = f'{path_content}/html/{num}.html'
+        if not os.path.exists(filename):
+            with open(filename,"w", encoding="utf-8") as f:
+                f.write(str(e))
+
+
 def parseAll():
     pages = readPages()
     for i, e in enumerate(pages):
-        num = str(i).rjust(2,"0")
-        filename = f'{path_content}/{num}.md'
+        num = dpages[i] #str(i).rjust(2,"0")
+        filename = num.mdfile()
         if not os.path.exists(filename):
             sl = SiteLoader(num)                
             sl.parse()
             sl.save()
 
+def list_docs_toload():
+    liPages = []
+    for i in dpages:
+        num = dpages[i] #str(i).rjust(2,"0")
+        if not os.path.exists(num.htmlfile()):
+           liPages.append(num)
+    return liPages
+
+import re
+class FileItem:
+    def __init__(self, page, num) -> None:
+        self.page=page
+        self.num = str(num).rjust(2,"0")
+        m=re.search(r'/([a-zA-Z0-9-_()]+)/$',page)
+        v=None
+        if m!=None:
+            v = m.group(1)
+        self.name = v
+        pass
+    def __str__(self) -> str:
+        return f'{self.num}-{self.name}'
+        pass
+    def htmlfile(self):
+        return f'{path_content}/html/{self}.html'
+    def mdfile(self):
+        return f'{path_content}/md/{self}.md'
+
+def PagesToDict(pages):
+    dpages = dict()
+    for i,p in enumerate(pages):
+        it = FileItem(p,i)
+        if it.name==None:
+            print(it)
+        dpages[i]=it
+    return dpages
+
+
+pages = readPages()
+dpages = PagesToDict(pages)
+
+import shutil
+def  MoveFiles(dirname, dpages, ext="md"):
+    # ext ="html"
+    # ext ="md"
+    path_content = dirname +"/"+ext
+    if not os.path.exists(path_content):
+        os.mkdir(path_content)
+    for i in dpages:
+        p= dpages[i]
+        s1=f'{dirname}/{p.num}.{ext}'
+        s2=f'{dirname}/{ext}/{p}.{ext}'
+        if os.path.exists(s1):
+            shutil.move(s1,s2)
+
 class SiteLoader():
     def __init__(self, num) -> None:
         self.num=num
+        self.name = dpages[self.num]
         self.lines=[]
 
     def page_avto_expert_wr(self, els):
@@ -94,7 +161,7 @@ class SiteLoader():
                 self.page_text(el)
 
     def parse(self):
-        filename = f'{path_content}/{self.num}.html'
+        filename = f'{path_content}/html/{self.name}.html'
         with open(filename,"r",encoding="utf-8") as f:
             text = f.read()
         soup = BeautifulSoup(text, "html.parser" )
@@ -117,6 +184,6 @@ class SiteLoader():
 
     def save(self):
         text = "\n".join(self.lines)
-        filename = f'{path_content}/{self.num}.md'
+        filename = f'{path_content}/md/{self.name}.md'
         with open(filename,"w",encoding="utf-8") as f:
             f.write(text)
