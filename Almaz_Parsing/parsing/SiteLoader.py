@@ -1,9 +1,10 @@
 from bs4 import BeautifulSoup
 import os
+from parsing.conf import config
 
 url = "https://federallab.ru"
 url_site_map = f'{url}/sitemap.xml'
-path_content = "data"
+path_content = config.data_path
 
 def readFile(num):
     name = dpages[num]

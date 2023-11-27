@@ -1,0 +1,13 @@
+sqlalchemy
+pytz
+aiogram
+python-dateutil
+openai
+sqlalchemy
+aiosqlite
+langchain
+nest_asyncio
+bs4
+tiktoken
+matplotlib
+faiss-cpu

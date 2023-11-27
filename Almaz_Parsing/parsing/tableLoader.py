@@ -43,17 +43,16 @@ class TableGroup:
                                 j+=1
             elif len(ps)==1:
                 txt = ps[0].text.strip()
-                detail.append( [txt])
+                sd = [txt]
+                detail.append( sd)
                 for i in range(1,len(tds)):
                     td=tds[i]
                     ps = td.find_all("p")
                     if len(ps)>=1:
                         txt =ps[0].text.strip()
-                        detail.append(txt)
+                        sd.append(txt)
 
             self.table.append(detail)
-
-
         
 
 class TableLoader:
@@ -115,15 +114,25 @@ class TableLoader:
 
 
     def parseBody(self):
-        self.body = []
+        headers=["Оценка нежилых помещений", 
+                 "Оценка земельных участков",
+                 "Оценка рыночной стоимости транспортных средств",
+                 "Оценка стоимости восстановительного ремонта (ущерба) внутренней отделки",
+                 "Оценка стоимости восстановительного ремонта (ущерба) конструктивных элементов"]
+
+        self.body:[TableGroup] = []
         trs = self.tbody[0].find_all('tr')
         tg = None
         for tr in trs:
             tds = tr.find_all('td')
+            td=tds[0]
+            ps = td.find_all('p')
+            txt = "\n".join([p.text for p in ps])
             if len(tds)==1:
-                td=tds[0]
-                ps = td.find_all('p')
-                txt = "\n".join([p.text for p in ps])
+                tg = TableGroup( txt)
+                self.body.append(tg)
+            elif txt in headers:
+                print(txt)
                 tg = TableGroup( txt)
                 self.body.append(tg)
             else:
@@ -133,7 +142,7 @@ class TableLoader:
                 tg.body.append(tr)
                 
     def parseBody2(self):
-        self.body = []
+        self.body:[TableGroup] = []
         trs = self.tbody[0].find_all('tr')
         tg = None
         for tr in trs:

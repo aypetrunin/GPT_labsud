@@ -15,3 +15,5 @@ testtable.ipynb - ноут для пошагового преобразован�
 
 Здесь тест таблицы цен:
 https://disk.yandex.ru/d/4IvrwK2pESS82A
+
+https://disk.yandex.ru/client/disk/2023/ChatGPT/Stag/labsud

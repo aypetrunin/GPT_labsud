@@ -1,5 +1,5 @@
-from SiteLoader import *
+from parsing.SiteLoader import *
 # parseAll()
-sl = SiteLoader("57")
-sl
+#sl = SiteLoader("57")
+#sl
 
