@@ -38,7 +38,7 @@ class table_do_md_class:
                 t.append(txt)
         # сохранить текст в файл
         fielname =config.data_path+"/"+filename
-        with open(fielname,"w") as f:
+        with open(fielname,"w", encoding="utf-8") as f:
             f.write("\n".join(t))
 
     def parse_t2(self):

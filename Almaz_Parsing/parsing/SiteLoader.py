@@ -41,23 +41,24 @@ def saveDocs_toload(docs, docstoload):
                 f.write(str(e))
 
 
-def parseAll():
+def parseAll(rewrite:False):
     pages = readPages()
     for i, e in enumerate(pages):
         num = dpages[i] #str(i).rjust(2,"0")
-        filename = num.mdfile()
-        if not os.path.exists(filename):
-            sl = SiteLoader(num)                
+        filename = num.md_file()
+        print(filename)
+        if rewrite or not os.path.exists(filename):
+            sl = SiteLoader(i)
             sl.parse()
             sl.save()
 
 def list_docs_toload():
-    liPages = []
+    li_pages = []
     for i in dpages:
         num = dpages[i] #str(i).rjust(2,"0")
-        if not os.path.exists(num.htmlfile()):
-           liPages.append(num)
-    return liPages
+        if not os.path.exists(num.html_file()):
+           li_pages.append(num)
+    return li_pages
 
 import re
 class FileItem:
@@ -66,16 +67,16 @@ class FileItem:
         self.num = str(num).rjust(2,"0")
         m=re.search(r'/([a-zA-Z0-9-_()]+)/$',page)
         v=None
-        if m!=None:
+        if m is not None:
             v = m.group(1)
         self.name = v
         pass
     def __str__(self) -> str:
         return f'{self.num}-{self.name}'
         pass
-    def htmlfile(self):
+    def html_file(self):
         return f'{path_content}/html/{self}.html'
-    def mdfile(self):
+    def md_file(self):
         return f'{path_content}/md/{self}.md'
 
 def PagesToDict(pages):
@@ -105,7 +106,7 @@ def  MoveFiles(dirname, dpages, ext="md"):
         if os.path.exists(s1):
             shutil.move(s1,s2)
 
-class SiteLoader():
+class SiteLoader:
     def __init__(self, num) -> None:
         self.num=num
         self.name = dpages[self.num]
@@ -123,43 +124,81 @@ class SiteLoader():
                         lines.append(t)
                     elif c ==["avt_why"]:
                         h2 = el.h2
-                        if h2!=None:
+                        if h2 is not None:
                             lines.append("## "+h2.text)
                         lines.extend(map(lambda x:x.text, el.findAll("p")))
                     elif c==["avt_list"]:
                         h3= el.h3
-                        if h3!=None:
+                        if h3 is not None:
                             lines.append("## "+h3.text)
                         ol = el.ol
-                        if ol!=None:
+                        if ol is not None:
                             lines.append(ol.text)
                 else:
                     lines.append("# Table")
                     h2 = el.h2
-                    if h2!=None:
+                    if h2 is not None:
                         lines.append("## "+h2.text)
                     table = el.table
-                    if table!=None:
+                    if table is not None:
                         lines.append(str(table))
 
-    def page_text(self, els):
+    def page_text(self, els, parseTable=True):
         lines = self.lines
         for el in els.childGenerator():
             #print(str(el))
             if el.name=="p":
-                lines.append("")
-                lines.append(el.text)
+                prefix = ""
+                text:str =el.text
+                if "class" in el.attrs:
+                    c = el.attrs["class"]
+                    if  "zag" in c or "big_title" in c:
+                        prefix = "## "
+                #lines.append("")
+                if text:
+                    lines.append(prefix+ text)
             elif el.name =="h2":
-                lines.append("## "+el.text)
+                prefix = "## "
+                text:str =el.text
+                if "class" in el.attrs:
+                    c = el.attrs["class"]
+                    if "oc_usl_zag" in c:
+                        prefix = ""
+                lines.append(prefix+text)
             elif el.name =="h3":
                 lines.append("## "+el.text)
             elif el.name == "table":
-                lines.append("# Table")
-                lines.append(str(el))
-            elif el.name =="ol":
-                lines.append(el.text)
-            elif el.name =="div":
+                if parseTable or self.num==57:
+                    lines.append("# Table")
+                    lines.append(str(el))
+            elif el.name == "ul" or el.name =="ol":
+                f=True
+                if "class" in el.attrs:
+                    c = el.attrs["class"]
+                    if "breadcrumb" in c:
+                        f=False
+                if f:
+                    self.page_text(el)
+            elif el.name == "li":
+                lines.append("- "+el.text)
+            elif el.name == "section":
                 self.page_text(el)
+            elif el.name =="div":
+                f=True
+                parsetable2 = parseTable
+                if "class" in el.attrs:
+                    c = el.attrs["class"]
+                    if "content_menu" in c or "page_banner" in c or "page_form" in c or "avt_question" in c\
+                            or "nexp" in c or "tabs_header" in c:
+                        f=False
+                    elif "avt_price" in c:
+                        parsetable2 = False
+                    elif "our_advantages_page_cell" in c or "pod_usl" in c:
+                        text:str = el.text.replace("\n"," ").replace("\t"," ").replace("    "," ").replace(" "," ")
+                        lines.append("- "+ text.strip())
+                        f=False
+                if f:
+                    self.page_text(el, parsetable2)
 
     def parse(self):
         filename = f'{path_content}/html/{self.name}.html'
@@ -173,11 +212,11 @@ class SiteLoader():
         self.lines.append("# "+ content[0].h1.text)
         els = content[0].findAll('div', class_="page_avto_expert_wr")
         if len(els)==0:
-            els2 = content[0].findAll('div', class_="page_text")
-            if (len(els2))>0:
-                self.page_text(els2[0])
-            else:
-                self.page_text(content[0])
+            # els2 = content[0].findAll('div', class_="page_text")
+            # if (len(els2))>0:
+            #     self.page_text(els2[0])
+            # else:
+            self.page_text(content[0])
         else:
             self.page_avto_expert_wr(els)
             #print(self.lines)
