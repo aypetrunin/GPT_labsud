@@ -62,6 +62,11 @@ class price_embeding_class:
         with open(self.data_key_file, "w", encoding="utf-8") as f:
             f.write(txt)
 
+        fragments = [{"page_content":fr.page_content,"metadata":fr.metadata} for fr in self.price_fragments]
+        txt = json.dumps( fragments, ensure_ascii=False)
+        with open(self.data_path + "/fragments.json", "w", encoding="utf-8") as f:
+            f.write(txt)
+
     def load_from_md(self, fn:str, add_text:str="",file_id:str="57"):
         '''Соберем ключи для поиска
         Заголовки первого и второго уровня
@@ -69,6 +74,7 @@ class price_embeding_class:
         '''
         h1items = {}
         new_fragments = []
+        self.docs.clear()
         with open(fn,"r", encoding="utf-8") as f:
             txt = f.read()
             self.docs.append(txt)
@@ -81,12 +87,14 @@ class price_embeding_class:
             ix = f.metadata["ix"]
             if h1 not in h1items:
                 h1items[h1]=1
-                fr ={"key":key, "ix":ix, "H1":h1, "type":"H1"}
+                fr ={"key":key, "ix":ix, "H1":h1, "type":"H1", "file_id":file_id}
                 new_fragments.append(fr)
                 d= Document(page_content=f"{add_text} {h1}",metadata={"key":key, "file_id":file_id})
                 p_key = key
                 self.price_fragments.append(d)
                 key+=1
+                if "H2" not in f.metadata:
+                    fr["content"] = f.page_content
             if "H2" in f.metadata:
                 h2 = f.metadata["H2"]
                 fr ={"key":key, "pkey":p_key, "ix":ix, "type":"H2", "H1":h1, "H2":h2, "content":f.page_content, "file_id":file_id}
@@ -95,7 +103,7 @@ class price_embeding_class:
                 d= Document(page_content=f"{add_text} {h2}",metadata={"key":key, "H1":h1, "file_id":file_id})
                 self.price_fragments.append(d)
                 key+=1
-        self.ix_fragments = new_fragments
+        self.ix_fragments.extend(new_fragments)
 
     def faiss_from_md_save(self, db_filename):
         # Создадим индексную базу из разделенных фрагментов текста
@@ -210,6 +218,7 @@ class price_embeding_class:
             if os.path.exists(filename):
                 self.load_from_md(filename,"", num_i)
         self.save_keys()
+
         self.faiss_from_md_save(self.db_filename2)
 
 price_db = None

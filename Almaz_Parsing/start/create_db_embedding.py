@@ -5,5 +5,5 @@ from gpt_openai.price_embeding import create_db, load_db, to_zip
 
 
 #create_db()
-# load_db
+#load_db()
 to_zip()

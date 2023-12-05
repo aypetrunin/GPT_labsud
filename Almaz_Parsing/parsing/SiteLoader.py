@@ -168,7 +168,8 @@ class SiteLoader:
             elif el.name =="h3":
                 lines.append("## "+el.text)
             elif el.name == "table":
-                if parseTable or self.num==57:
+                # parseTable or
+                if self.num==57:
                     lines.append("# Table")
                     lines.append(str(el))
             elif el.name == "ul" or el.name =="ol":
