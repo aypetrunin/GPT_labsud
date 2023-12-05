@@ -7,6 +7,7 @@ import zipfile
 from langchain.docstore.document import Document
 from openai import AsyncOpenAI, OpenAI
 import json
+import re
 
 class gptfunc_a_class:
     def __init__(self):
@@ -42,7 +43,31 @@ class gptfunc_a_class:
           fragments.extend( items)
       return fragments
 
+    def google_load_file(self, url: str, name_file: str):
+        def download_file_from_google_drive(file_id: str, name_file: str):
+            URL = f"https://drive.google.com/uc?id={file_id}&export=download"
+            response = requests.get(URL, stream=True)
+            print(URL)
+            with open(name_file, "wb") as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+        def file_id_from_url(url: str) -> str:
+            # Extract the document ID from the URL
+            match_ = re.search('/file/d/([a-zA-Z0-9-_]+)', url)
+            if match_ is None:
+                raise ValueError('Invalid Google Docs URL')
+            doc_id = match_.group(1)
+            return doc_id
+
+        doc_id = file_id_from_url(url)
+        download_file_from_google_drive(doc_id, name_file)
+        
+
     def load_file(self, url: str, name_file: str):
+        if url.startswith("https://drive.google.com/"):
+            self.google_load_file(url, name_file)
+            return
         response = requests.get(url) # Получение документа по url.
         response.raise_for_status()  # Проверка ответа и если была ошибка - формирование исключения.
         # Сохранение архива.
