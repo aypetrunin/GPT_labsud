@@ -5,6 +5,6 @@
 
 Ноутбук для тестирования - https://colab.research.google.com/drive/1uW37hOuhfFOtaLAvfyEOWFJXoCqY9F2R?usp=sharing
 
-Таблица идеальных вопросов-ответов - https://docs.google.com/spreadsheets/d/1-mi9Hii82IPV3Nd_eopyO2X4ZHRAUJb6/edit?usp=sharing&ouid=100876472712498532754&rtpof=true&sd=true 
+Таблица идеальных вопросов-ответов - https://docs.google.com/spreadsheets/d/1O-mbXHfLsFzK4AfkE6yAGtfcB4PisT67dZfAue2oOcQ/edit?usp=sharing
 
 
