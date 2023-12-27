@@ -252,7 +252,7 @@ def load_bd_text(url: str, verbose=0):
     response.raise_for_status()  # Проверка ответа и если была ошибка - формирование исключения.
     return create_embedding(response.text, verbose=verbose)
 
-def load_bd_vect(url: str, name, verbose=0):
+def load_bd_vect(name, url: str, verbose=0):
     """ Функция загружает векторную Базу знаний."""
     # bd_index
     name_bd = name+'.zip'
@@ -277,12 +277,12 @@ def load_bd_vect(url: str, name, verbose=0):
         print()
     return bd
 
-def load_bd (url_vect: str, url_text: str, verbose=0):
+def load_bd (name, url_vect: str, url_text: str, verbose=0):
     """ Функция организует очередность загрузки Базы знаний.
         Сначала идет загрузка векторной базы, если она не загружается,
         то загружается база в текстовом формате и потом преобразуется в векторную."""
     try:
-        bd = load_bd_vect(url_vect, verbose)
+        bd = load_bd_vect(name, url_vect, verbose)
         print("Загрузка векторной Базы знаний выполнена успешно.")
         return bd
     except Exception as e:
