@@ -1,3 +1,5 @@
+import os.path
+
 import tiktoken
 import matplotlib.pyplot as plt
 from langchain.embeddings import OpenAIEmbeddings
@@ -9,7 +11,7 @@ from openai import AsyncOpenAI, OpenAI
 import json
 import re
 
-class gptfunc_a_class:
+class Chat_Manager:
     def __init__(self):
         self.db =None
         self.ix_fragments =None
@@ -19,6 +21,7 @@ class gptfunc_a_class:
       encoding = tiktoken.get_encoding(encoding_name)
       num_tokens = len(encoding.encode(string))
       return num_tokens
+    
     def hist(self, fragments):
       fragment_token_counts = [self.num_tokens_from_string(fragment.page_content, "cl100k_base") for fragment in fragments]
       plt.hist(fragment_token_counts, bins=20, alpha=0.5, label='Fragments')
@@ -62,9 +65,16 @@ class gptfunc_a_class:
 
         doc_id = file_id_from_url(url)
         download_file_from_google_drive(doc_id, name_file)
-        
+
+    def load_file_content(self, url: str):
+        response = requests.get(url) # Получение документа по url.
+        response.raise_for_status()  # Проверка ответа и если была ошибка - формирование исключения.
+        return response.content
+
 
     def load_file(self, url: str, name_file: str):
+        if os.path.exists( name_file):
+            return
         if url.startswith("https://drive.google.com/"):
             self.google_load_file(url, name_file)
             return
@@ -88,7 +98,7 @@ class gptfunc_a_class:
 
     def load_fragments(self, url:str, file_name:str):
         self.load_file(url,file_name)
-        with open(self.file_name, "r", encoding="utf-8") as f:
+        with open(file_name, "r", encoding="utf-8") as f:
             self.ix_fragments = json.load(f)
         pass
     def search_with_score(self, search_str:str, limit_score:float = .8):
@@ -175,6 +185,19 @@ class gptfunc_a_class:
                 res.append(doc)
         return res
 
+    def insert_newlines(self, text: str, max_len: int = 120) -> str:
+        """ Функция форматирует переданный текст по длине
+        для лучшего восприятия на экране."""
+        words = text.split()
+        lines = []
+        current_line = ""
+        for word in words:
+            if len(current_line + " " + word) > max_len:
+                lines.append(current_line)
+                current_line = ""
+            current_line += " " + word
+        lines.append(current_line)
+        return "\n".join(lines)
 
     def answer_index(self, model, system, topic: str, query, search_index, temp = 0, verbose_documents = 0,  verbose_price = 0, top_documents = 3, limit_score = 0.0):
         """ Основная функция которая формирует запрос и получает ответ от OpenAI по заданному вопросу
@@ -191,17 +214,20 @@ class gptfunc_a_class:
         for i, doc in enumerate(docs):
             # Формирование контекста для запроса GPT и показа на экран отобранных чанков.
             message_content = message_content + f'Отрывок документа №{i+1}:{doc.page_content}'
-            message_content_display = message_content_display + f"\n Отрывок документа №{i+1}. Chank № {doc.metadata.get('key')}. Score({str(doc.metadata.get('score'))})\n -----------------------\n{insert_newlines(doc[0].page_content)}\n"
+            message_content_display = message_content_display + \
+                f"\n Отрывок документа №{i+1}. Chank № {doc.metadata.get('key')}. "+\
+                f"Score({str(doc.metadata.get('score'))})\n -----------------------\n{self.insert_newlines(doc.page_content)}\n"
 
             # Сбор информации для группого запроса.
             if bool(query):
                 # Выделение из строки метаданных ссылки. Если нет - присваиваем пустую строку.
                 link = ''
                 # Заполнение запроса выбранными чанками.
-                query[f"chank_{i+1}"] = f"Chank № {doc.metadata.get('chank')}. Score({str(doc.metadata.get('score'))}).\n{doc.page_content}.\n--------\n{link}"
+                query[f"chank_{i+1}"] = f"""Chank № {doc.metadata.get('chank')}. Score({str(doc.metadata.get('score'))}).
+{doc.page_content}.\n--------\n{link}"""
 
         # Вывод на экран отобранных чанков.
-        if (verbose_documents):
+        if verbose_documents:
             print(message_content_display)
 
         # Отправка запроса к Open AI.
