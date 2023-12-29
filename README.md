@@ -7,4 +7,8 @@
 
 Таблица идеальных вопросов-ответов - https://docs.google.com/spreadsheets/d/1O-mbXHfLsFzK4AfkE6yAGtfcB4PisT67dZfAue2oOcQ/edit?usp=sharing
 
+Ноутбук для второго этапа тестирования - https://colab.research.google.com/drive/1aTxl0-ZTfjbpZIvZ2bcA8RjTycz79yK-?usp=sharing
+
+Ноутбук для тестирования алгоритма по пулу идеальных вопросов и ответов - https://colab.research.google.com/drive/1KBAVYGNqmRdT9VU0k0SVMsiHbDWuaBS-?usp=sharing
+
 
