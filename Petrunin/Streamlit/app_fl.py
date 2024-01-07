@@ -5,11 +5,22 @@ from openai import OpenAI
 from utils import *
 
 
-url_promt = "https://raw.githubusercontent.com/terrainternship/GPT_labsud/main/Galina/FLSE_promt"
-url_bd = 'https://github.com/terrainternship/GPT_labsud/raw/main/federallab_bd_index_v2.zip'
-url_question = 'https://github.com/terrainternship/GPT_labsud/raw/main/federallab_bd_question.zip'
+def load_bd():
+    if not st.session_state.is_federallab_bd:
+        url_promt = "https://raw.githubusercontent.com/terrainternship/GPT_labsud/main/Galina/FLSE_promt"
+        url_bd = 'https://github.com/terrainternship/GPT_labsud/raw/main/federallab_bd_index_v2.zip'
+        url_question = 'https://github.com/terrainternship/GPT_labsud/raw/main/federallab_bd_question.zip'
+        with st.spinner('Загрузка ...'):
+            st.session_state.federallab_bd = load_bd_vect(url_bd)
+            st.session_state.federallab_question = load_bd_question(
+                url_question)
+            st.session_state.federallab_promt = load_file(url_promt)
+            st.session_state.is_federallab_bd = True
+        with st.sidebar:
+            st.caption("База знаний загружена.")
 
-dialog_depth = 2
+
+dialog_depth = 3
 
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-3.5-turbo-1106"
@@ -18,21 +29,17 @@ if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "Наша фирма оказывает услуги по экспертизе и оценке. Чем могу я Вам помочь?"}]
 
-if 'federallab_promt' not in st.session_state:
-    st.session_state.federallab_promt = load_file(url_promt)
-    print("Загрузка промта.")
-
-if 'federallab_bd' not in st.session_state:
-    st.session_state.federallab_bd = load_bd_vect(url_bd)
-    print("Загрузка Базы знаний.")
-
-if 'federallab_question' not in st.session_state:
-    st.session_state.federallab_question = load_bd_question(url_question)
-    print("Загрузка Базы вопрсов.")
+if 'is_federallab_bd' not in st.session_state:
+    st.session_state.is_federallab_bd = False
 
 with st.sidebar:
     openai_api_key = st.text_input(
         "OpenAI API Key", key="chatbot_api_key", type="password")
+    if st.button("Загрузка Базы знаний...", use_container_width=True):
+        if not openai_api_key:
+            st.info("Введите ваш OpenAI API key для продолжения.")
+            st.stop()
+        load_bd()
     st.divider()
     if st.button("Новый диалог", use_container_width=True):
         st.session_state.messages = [
@@ -57,8 +64,11 @@ for message in st.session_state.messages:
 if query := st.chat_input("Введите свой вопрос."):
 
     if not openai_api_key:
-        st.info("Please add your OpenAI API key to continue.")
+        st.info("Введите ваш OpenAI API key для продолжения.")
         st.stop()
+
+    if not st.session_state.is_federallab_bd:
+        load_bd()
 
     with st.chat_message("user"):
         message_user = st.empty()
@@ -71,7 +81,7 @@ if query := st.chat_input("Введите свой вопрос."):
             st.session_state.federallab_question, query)
 
         if not is_query:
-            # Формирование по диалогу уточняющего вопроса.
+            # Формирование уточняющего вопроса по диалогу.
             if len(st.session_state.messages) > 1:
                 refined_query = query_refiner(
                     client=clientOpenAI,
