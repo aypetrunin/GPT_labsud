@@ -1,13 +1,12 @@
 import requests
 import zipfile
-from openai import OpenAI
 # from langchain.vectorstores import FAISS
 from langchain_community.vectorstores import FAISS
 # from langchain.embeddings.openai import OpenAIEmbeddings
 import os
 from langchain_openai import OpenAIEmbeddings
-from gptindex.ixconfig import ixconfig
-
+from ixconfig import ixconfig
+from config import config
 
 def load_file(url: str):
     """ Функция загрузки документа по url как текст."""
@@ -60,7 +59,7 @@ class ixapp_class:
         self.promt = self.load_file(self.config.url_promt, "prompt.txt")
 
     def load_file(self, url:str, file_name:str):
-        path_name = os.path.join(self.config.index_path,file_name)
+        path_name = os.path.join(config.index_path,file_name)
         if os.path.exists(path_name):
             with open(path_name,"r") as f:
                 text = f.read()
@@ -71,8 +70,8 @@ class ixapp_class:
         return text
     def load_db(self, url:str, name:str):
         db_name = f"{self.prefixname}{name}"
-        load_zip(url, self.config.index_path, db_name)
-        extract_dest = os.path.join(self.config.index_path, db_name)
+        load_zip(url, config.index_path, db_name)
+        extract_dest = os.path.join(config.index_path, db_name)
         if os.path.exists(os.path.join(extract_dest, db_name)):
             extract_dest = os.path.join(extract_dest, db_name)
         # print(extract_dest)

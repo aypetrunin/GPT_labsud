@@ -6,7 +6,7 @@ from sqlalchemy import Column, BigInteger, Integer, String, ForeignKey, Date, Ti
 from datetime import datetime as ddatetime, timezone, timedelta
 
 def now():
-    return ddatetime.now(timezone(timedelta(hours=3)))
+    return ddatetime.now(timezone(timedelta(hours=3))).replace(tzinfo=None)
 
 class Base(AsyncAttrs, DeclarativeBase):
     pass
@@ -20,6 +20,8 @@ class User(Base):
     first_name = Column(String(64))
     last_name = Column(String(64))
     dt_create = Column(DATETIME, default=now)
+    dt_startquota =Column(DATETIME)
+    quota = Column(Integer)
 
 class UserMessage(Base):
     __tablename__ = 'user_messages'

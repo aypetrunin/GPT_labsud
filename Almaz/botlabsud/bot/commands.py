@@ -42,8 +42,20 @@ async def cmd_cancel(message: types.Message, state:FSMContext):
     h.quota = 0
     await h.update_data()
 
+@router.message(filters.Command(commands=["status"]))
+async def cmd_status(message: types.Message, state:FSMContext):
+    h = gpt_helper(message, state)
+    await h.db.update_user()
+    await h.get_data()
+    if h.api_key:
+        text = "Введен api_key, неограниченное количество запросов"
+    else:
+        text = f"Осталось {h.db.quota} токенов,начало {h.db.dt_startquota}"
+    await h.answer(text)
+    await h.update_data()
+
 @router.message(F.text.startswith("/"))
-async def cmd_cancel(message: types.Message, state:FSMContext):
+async def cmd_notsupport(message: types.Message, state:FSMContext):
     await message.answer("Команда не поддерживается")
 
 @router.message(BotStates.api_key, F.text)

@@ -1,5 +1,5 @@
 from dotenv import  load_dotenv
-from conf import config
+from config import config
 import os
 from pprint import pprint
 def init_config():
@@ -9,7 +9,6 @@ def init_config():
     config.config_file_path = ""
     config.data_path = os.getenv("data_path")
     config.index_path = os.getenv("index_path")
-    os.environ["OPENAI_API_KEY"] = config.OPENAI_API_KEY
 
 load_dotenv(".env")
 init_config()

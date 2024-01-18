@@ -1,5 +1,5 @@
 from loguru import logger
-from conf import config
+from config import config
 import os
 import logging
 

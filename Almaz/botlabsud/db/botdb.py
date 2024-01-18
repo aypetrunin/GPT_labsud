@@ -1,12 +1,14 @@
 from aiogram import types
 from db.base import async_session
 from db.models import User, UserMessage,  ErrorLog, Rating, now
-from sqlalchemy import select, update
+from sqlalchemy import select, update, engine
 from sqlalchemy.sql import Executable
+from sqlalchemy.orm import aliased
 from gptindex.gptutils import num_tokens_from_string
 from typing import Optional
 from utils.logger import logger
-
+from ixconfig import ixconfig
+from typing import Any
 
 class BotDB:
     def __init__(self, m: Optional[types.Message]):
@@ -29,6 +31,8 @@ class BotDB:
             self.usermessage_id = 0
         self.session = async_session()
         self.dt = now()
+        self.quota = 0
+        self.dt_startquota = now()
 
     async def close(self):
         if self.session:
@@ -47,27 +51,43 @@ class BotDB:
         self.session.add(obj)
         await self.session.commit()
 
-    async def get(self, stmt:Executable):
+    async def get(self, stmt:Executable)->engine.Result[Any]:
         result = await self.session.execute(stmt)
         return result
 
-    async def new_user(self):
-        q = await self.get(
-            select(User.id).where(User.tg_id == self.user_tg_id)
+    async def update_user(self):
+        dt = now()
+        u=User
+        q: engine.Result = await self.get(
+            select(u.id, u.quota, u.dt_startquota ).where(u.tg_id == self.user_tg_id)
         )
-        self.user_id = q.scalar_one_or_none()
         u = self
-        if not self.user_id:
+        r = q.first()
+        if r:
+            u.user_id, u.quota, u.dt_startquota = r
+        else:
             fu = self.message.from_user
             user = User(
                 tg_id=u.user_tg_id,
                 username=u.username,
                 first_name =  fu.first_name,
                 last_name = fu.last_name,
-                e_mail = fu.url
+                # e_mail = fu.url,
+                quota = ixconfig.maxquota,
+                dt_startquota =dt
             )
             await self.add(user)
             self.user_id = user.id
+        if u.dt_startquota==None or (dt-u.dt_startquota).seconds > 10*3600:
+            u.quota = ixconfig.maxquota
+            u.dt_startquota = dt
+
+    async def update_quota(self):
+        u = aliased(User,name="u")
+        await self.execute(stmt= update(u).where(u.id == self.user_id).values(
+            quota = self.quota,
+            dt_startquota = self.dt_startquota
+        ))
 
     async def new_usermessage(self, message_text):
         u = self
@@ -88,6 +108,7 @@ class BotDB:
         return r.first()
 
     async def answer_usermessage(self, message_id, answer, prompt_tokens=0, completion_tokens=0):
+        self.quota -= prompt_tokens + completion_tokens*2
         m = UserMessage
         dt2 = now()
         sec = (dt2 - self.dt).total_seconds()

@@ -5,7 +5,7 @@ logger.info("Start. Загружаем индексную БД")
 from db.base import init_database
 init_database(config.database_path)
 logger.info("Загружаем БД")
-from gptindex.gptix import ixapp
+from gptindex.ixapp import ixapp
 from bot.start_bot import bot_main
 import asyncio
 

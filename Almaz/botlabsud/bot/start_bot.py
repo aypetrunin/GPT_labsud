@@ -1,4 +1,4 @@
-from conf import config
+from config import config
 from aiogram import Bot, Dispatcher
 from bot.commands import router as router_chat
 from bot.different_types import router as router_diff
