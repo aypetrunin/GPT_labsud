@@ -5,32 +5,48 @@ from gptindex.ixapp import ixapp
 from  openai import AsyncOpenAI
 from datetime import datetime
 from bot.keyboard import create_rating_keyboard
-from db.botdb import BotDB
+from db.botdb import BotDB, BotDBData
 from utils.logger import logger
 from gptindex.gptutils import num_tokens_from_string
 from config import config
 
-class gpt_helper:
+class Gpt_helper:
     prompt_tokens=0
     completion_tokens=0
     def __init__(self, message: types.Message, context:FSMContext):
         self.message = message
         self.query = message.text
         self.context = context
-        self.data = None
+        self.context_data = None
         self.api_key = None
         self.clientOpenAI =None
         self.quota = 0
         self.api_key = None
         self.q_tokens = 0
         self.a_tokens = 0
-        self.db = BotDB(self.message)
+        self.data:BotDBData = None
+        self.db:BotDB = None #BotDB(self.message)
         self.d1 = datetime.now()
-
-
+    async def close(self):
+        await self.db.close()
+    async def get_data(self):
+        if self.context:
+            self.context_data = await self.context.get_data()
+        else:
+            self.context_data = {}
+        d = self.context_data
+        self.data = BotDBData()
+        self.db= BotDB(self.message, self.data)
+        await self.db.update_user()
+        if "messages" in d:
+            self.data.messages = d["messages"]
+        if "api_key" in d:
+            self.data.api_key = d["api_key"]
+    async def update_data(self):
+        await self.db.update_data()
+        await self.context.update_data(messages=self.data.messages, api_key = self.data.api_key)
 
     async def save_api_key(self):
-        await self.get_data()
         self.set_api_key(self.query)
         await self.update_data()
 
@@ -39,23 +55,8 @@ class gpt_helper:
         api_key = api_key.strip()
         if api_key=="0":
             api_key=None
-        self.data["api_key"] = api_key
-        self.api_key = api_key
+        self.data.api_key = api_key
         self.quota = 0
-
-    async def get_data(self):
-        self.data = await self.context.get_data()
-        d = self.data
-        if "messages" in self.data:
-            self.messages = self.data["messages"]
-            if "quota" in self.data:
-                self.quota = self.data.get("quota")
-
-        else:
-            self.messages = []
-
-        if "api_key" in d:
-            self.api_key = d["api_key"]
 
     async def answer(self, text):
         await self.message.answer( text=text, reply_markup=types.ReplyKeyboardRemove())
@@ -78,7 +79,7 @@ class gpt_helper:
         config = ixapp.config
         model = config.openai_model
         client:AsyncOpenAI = self.ClientAI()
-        conversation = self.conversation_string( self.messages, config.dialog_depth)
+        conversation = self.conversation_string( self.data.messages, config.dialog_depth)
         response = await client.chat.completions.create(
             model=model,
             messages=[
@@ -103,11 +104,6 @@ class gpt_helper:
         for message in messages[k:]:
             conversation_string += f"{message['role']}: {message['content']}\n"
         return conversation_string
-    async def update_data(self):
-        d = self.data
-        d["quota"] = self.quota
-        d["messages"] = self.messages
-        await self.context.update_data(**self.data)
 
     async def edit_text_rating(self, text):
         await self.pause_message.edit_text(text, reply_markup= create_rating_keyboard(self.db.usermessage_id))
@@ -133,7 +129,7 @@ class gpt_helper:
         if self.api_key:
             rest = ""
         else:
-            rest = f" осталось {self.db.quota}"
+            rest = f" осталось {self.db.data.quota}"
         text = f"использовано. вопрос: {self.prompt_tokens}, ответ:{self.completion_tokens} токенов ({sec}с) {rest}"
         # await db.update_message(message, text)
         await self.message.answer(text=text)
@@ -181,8 +177,8 @@ class gpt_helper:
         from datetime import timedelta
         if self.api_key:
             return True
-        if self.db.quota<=0:
-            text = f"Вы превысили количество токенов {self.db.quota}, счетчик обновится {self.db.dt_startquota + timedelta(hours=10)}"
+        if self.db.data.quota<=0:
+            text = f"Вы превысили количество токенов {self.db.data.quota}, счетчик обновится {self.db.data.dt_startquota + timedelta(hours=10)}"
             m = await self.message.answer(text)
             await self.db.answer_usermessage(m.message_id, text)
             return False
@@ -191,43 +187,44 @@ class gpt_helper:
     async def answer_gpt(self):
         await self.db.new_usermessage(self.query)
         h = self
-        await h.get_data()
-        await self.db.update_user()
         if not await self.check_quota():
             return
         await h.pause()
         try:
             is_query, db_response = ixapp.find_query(h.query)
-            logger.debug("Вопрос: "+h.query)
+            logger.debug(f"Вопрос: {h.query}  Dialog {h.data.dialog}")
+            if h.data.dialog == 0:
+                h.data.messages = []
+
+
 
             if not is_query:
                 # Формирование уточняющего вопроса по диалогу.
-                if len(h.messages) > 1:
+                if len(h.data.messages) > 1:
                     await h.edit_text("Уточняю вопрос...")
                     refined_query = await h.query_refiner(h.query)
+                    logger.debug(f"refined_query: {refined_query}")
                     await h.edit_text(f"Отвечаю на вопрос: {refined_query}")
                 else:
                     refined_query = h.query
-                h.messages.append({"role": "user", "content": f"{h.query} ({refined_query})"})
+                h.data.messages.append({"role": "user", "content": f"{h.query} ({refined_query})"})
                 # Возвращение релевантных документов по запросу.
-                logger.debug(f"refined_query: {refined_query}")
                 content = ixapp.bd_retriever(refined_query)
                 full_response = await h.completion(content, refined_query)
                 logger.debug("Ответ: "+full_response)
 
-                h.messages.append({"role": "assistant", "content": f"{h.query} ({full_response})"})
+                h.data.messages.append({"role": "assistant", "content": f"{h.query} ({full_response})"})
             else:
                 text = f"(ответ из базы вопросов)\n{db_response}"
                 logger.debug(text)
                 await self.db.answer_usermessage( h.topic_message.message_id, text, self.prompt_tokens, self.completion_tokens)
                 if ixapp.config.askrating:
                     await h.edit_text_rating(text)
-                h.messages.append(
+                h.data.messages.append(
                     {"role": "user", "content": f"{h.query}"})
-                h.messages.append(
+                h.data.messages.append(
                     {"role": "assistant", "content": db_response})
             await h.update_data()
-            await self.db.update_quota()
         except Exception as e:
             text = "Ошибка: "+str(e)
             logger.exception("answer_gpt")
@@ -235,7 +232,6 @@ class gpt_helper:
             await self.log("answer_gpt", "", "Ошибка: "+text)
 
     async def select_choice(self, state: State, text):
-        await self.db.update_user()
         logger.debug(text)
         await self.context.set_state(state)
         await self.message.answer( text=text, reply_markup=types.ReplyKeyboardRemove())
@@ -243,7 +239,13 @@ class gpt_helper:
     async def log(self, func, param, text):
         await self.db.add_log(func, param, text)
 
+async def get_gpt_helper(message, state):
+    h = Gpt_helper(message, state)
+    await h.get_data()
+    return h
+
+
 async def answer_gpt(message: types.Message, context:FSMContext):
-    h = gpt_helper(message, context)
+    h = Gpt_helper(message, context)
     await h.answer_gpt()
 

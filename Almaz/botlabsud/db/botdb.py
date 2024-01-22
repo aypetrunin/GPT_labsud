@@ -10,8 +10,22 @@ from utils.logger import logger
 from ixconfig import ixconfig
 from typing import Any
 
+class BotDBData:
+    def __init__(self):
+        self.quota = ixconfig.maxquota
+        self.dt_startquota = now()
+        self.dialog = 1
+        self.api_key = None
+        self.messages = []
+    def clear(self):
+        self.messages.clear()
+        self.quota = ixconfig.maxquota
+        self.dt_startquota = now()
+
+
 class BotDB:
-    def __init__(self, m: Optional[types.Message]):
+    def __init__(self, m: Optional[types.Message], d:BotDBData = None):
+        self.dt = now()
         self.message = m
         if m:
             self.message_id = m.message_id
@@ -30,9 +44,9 @@ class BotDB:
             self.username = 0
             self.usermessage_id = 0
         self.session = async_session()
-        self.dt = now()
-        self.quota = 0
-        self.dt_startquota = now()
+        self.data = d
+        if d == None:
+            self.data = BotDBData()
 
     async def close(self):
         if self.session:
@@ -59,12 +73,13 @@ class BotDB:
         dt = now()
         u=User
         q: engine.Result = await self.get(
-            select(u.id, u.quota, u.dt_startquota ).where(u.tg_id == self.user_tg_id)
+            select(u.id, u.quota, u.dt_startquota, u.dialog ).where(u.tg_id == self.user_tg_id)
         )
         u = self
+        data = u.data
         r = q.first()
         if r:
-            u.user_id, u.quota, u.dt_startquota = r
+            u.user_id, data.quota, data.dt_startquota, data.dialog = r
         else:
             fu = self.message.from_user
             user = User(
@@ -73,20 +88,24 @@ class BotDB:
                 first_name =  fu.first_name,
                 last_name = fu.last_name,
                 # e_mail = fu.url,
-                quota = ixconfig.maxquota,
-                dt_startquota =dt
+                quota = data.quota,
+                dt_startquota =dt,
+                dialog = data.dialog,
             )
             await self.add(user)
             self.user_id = user.id
-        if u.dt_startquota==None or (dt-u.dt_startquota).seconds > 10*3600:
-            u.quota = ixconfig.maxquota
-            u.dt_startquota = dt
+        if data.dt_startquota==None or (dt-data.dt_startquota).seconds > 10*3600:
+            data.quota = ixconfig.maxquota
+            data.dt_startquota = dt
+        print(self.user_id)
 
-    async def update_quota(self):
+    async def update_data(self):
         u = aliased(User,name="u")
+        data = self.data
         await self.execute(stmt= update(u).where(u.id == self.user_id).values(
-            quota = self.quota,
-            dt_startquota = self.dt_startquota
+            quota = data.quota,
+            dt_startquota = data.dt_startquota,
+            dialog = data.dialog
         ))
 
     async def new_usermessage(self, message_text):
@@ -100,6 +119,7 @@ class BotDB:
         )
         await self.add(message)
         self.usermessage_id =  message.id
+        print(f"self.usermessage_id = {self.usermessage_id}")
 
     async def get_usermessage(self):
         if self.usermessage_id == 0:
@@ -108,10 +128,11 @@ class BotDB:
         return r.first()
 
     async def answer_usermessage(self, message_id, answer, prompt_tokens=0, completion_tokens=0):
-        self.quota -= prompt_tokens + completion_tokens*2
+        self.data.quota -= prompt_tokens + completion_tokens*2
         m = UserMessage
         dt2 = now()
         sec = (dt2 - self.dt).total_seconds()
+        print(f"self.usermessage_id = {self.usermessage_id}")
         await self.execute(
             stmt = update(m).where(m.id == self.usermessage_id).values(
                 a_message = answer,

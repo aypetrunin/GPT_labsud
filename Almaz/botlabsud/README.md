@@ -24,7 +24,7 @@ pip freeze > requirements.txt
 # Bot
 https://t.me/AlmazLabSudbot
 start - Start
-diaolog - включить режим диалога
+dialog - включить режим диалога
 nodialog - Выключить режим диалога 
 clear - Очистить историю диалога 
 api_key - Подключить свой ключ API
@@ -33,3 +33,7 @@ status - Показать статус запросов
 # Примеры вопросов
 Где можно к вам обратиться?
 Автотехническая экспертиза
+
+# Инструкции
+Видео с описанием
+https://youtu.be/vxgCiUNTO8A

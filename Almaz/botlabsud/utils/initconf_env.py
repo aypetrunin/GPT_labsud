@@ -10,6 +10,10 @@ def init_config():
     config.data_path = os.getenv("data_path")
     config.index_path = os.getenv("index_path")
 
+def load_config():
+    """Начальная точка входа, загрузка делается в самом модуле один раз при импорте!!!"""
+    pass
+
 load_dotenv(".env")
 init_config()
 def ppo(obj):

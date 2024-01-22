@@ -22,6 +22,9 @@ class User(Base):
     dt_create = Column(DATETIME, default=now)
     dt_startquota =Column(DATETIME)
     quota = Column(Integer)
+    dialog = Column(Integer)
+
+
 
 class UserMessage(Base):
     __tablename__ = 'user_messages'
@@ -58,7 +61,7 @@ class Rating(Base):    # оценка ответов
     __tablename__ = 'ratings'
     id = Column(Integer, primary_key=True, autoincrement=True)
     chat_id = Column(Integer)
-    user_id = Column(Integer)  # ID пользователя в телеграмм
+    user_id = Column(Integer, ForeignKey('users.id'))  # ID пользователя в телеграмм
     message_id = Column(Integer)  # ID сообщения в телеграмм
     user_message_id = Column(Integer, ForeignKey('user_messages.id'))
     rating = Column(Integer)
@@ -68,7 +71,7 @@ class TextMessage(Base):            # служебные сообщения
     __tablename__ = 'text_messages'
     id = Column(Integer, primary_key=True)
     messages_name = Column(String(100))
-    text = Column(String())
+    text = Column(String)
 
 class ModelPrompt(Base):           # промты
     __tablename__ = 'model_prompts'
