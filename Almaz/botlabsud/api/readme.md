@@ -8,8 +8,7 @@ uvicorn start_api:app --reload --port 5000 --host 0.0.0.0
 3. Развернуто для тестирования
 
 # url = "http://127.0.0.1:5000"
-url = "http://163.5.207.104:5000"
-
+url = "http://109.172.91.211:5000"
 4. использование АПИ
 
 import requests
