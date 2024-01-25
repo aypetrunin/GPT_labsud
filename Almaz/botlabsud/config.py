@@ -5,5 +5,6 @@ class config_class:
     config_file_path = ""
     data_path =""
     index_path =""
+    OPENAI_END_POINT = "https://api.openai.com/v1"
 
 config = config_class()

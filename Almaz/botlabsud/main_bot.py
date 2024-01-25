@@ -14,7 +14,7 @@ logger.info("Start...")
 from db.base import database
 
 async def main():
-    await database.async_main()
+    # await database.async_main()
     await bot_main()
 
 if __name__ == '__main__':

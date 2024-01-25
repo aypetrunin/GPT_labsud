@@ -9,6 +9,7 @@ def init_config():
     config.config_file_path = ""
     config.data_path = os.getenv("data_path")
     config.index_path = os.getenv("index_path")
+    config.OPENAI_END_POINT = os.getenv("OPENAI_END_POINT", config.OPENAI_END_POINT)
 
 def load_config():
     """Начальная точка входа, загрузка делается в самом модуле один раз при импорте!!!"""

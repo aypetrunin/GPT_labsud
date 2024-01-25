@@ -74,7 +74,7 @@ class Gpt_helper:
         if not api_key:
             api_key = config.OPENAI_API_KEY
         if not self.clientOpenAI:
-            self.clientOpenAI = AsyncOpenAI(api_key=api_key)
+            self.clientOpenAI = AsyncOpenAI(api_key=api_key, base_url= config.OPENAI_END_POINT)
         return self.clientOpenAI
 
     async def query_refiner(self,  query):
@@ -142,16 +142,17 @@ class Gpt_helper:
             full_response = "Ответ системы"
         else:
             usercontent = f"Документ с информацией для ответа пользователю:\n {usercontent}.\nВопрос клиента: {refined_query}"
-            responses = await client.chat.completions.create(
-                    model=config.openai_model,
-                    messages=[
+            body = {
+                "model": config.openai_model,
+                    "messages": [
                         {"role": "system", "content": ixapp.promt},
                         {"role": "user",
                          "content": usercontent}
                     ],
-                    temperature=0,
-                    stream=stream,
-            )
+                    "temperature": 0,
+                    "stream": stream
+            }
+            responses = await client.chat.completions.create( **body)
             if stream:
                 async for response in responses:
                     delta = (response.choices[0].delta.content or "")

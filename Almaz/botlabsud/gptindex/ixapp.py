@@ -7,6 +7,7 @@ import os
 from langchain_openai import OpenAIEmbeddings
 from ixconfig import ixconfig
 from config import config
+from openai import OpenAI
 
 def load_file(url: str):
     """ Функция загрузки документа по url как текст."""
@@ -75,7 +76,9 @@ class ixapp_class:
         if os.path.exists(os.path.join(extract_dest, db_name)):
             extract_dest = os.path.join(extract_dest, db_name)
         # print(extract_dest)
-        db = FAISS.load_local(extract_dest, OpenAIEmbeddings())
+        embeddings =OpenAIEmbeddings(openai_api_base=config.OPENAI_END_POINT)
+
+        db = FAISS.load_local(extract_dest, embeddings)
         return db
     def bd_retriever(self, query):
         docs = self.db.similarity_search_with_score(query, k=3)

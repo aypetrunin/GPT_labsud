@@ -39,13 +39,13 @@ class Gpt_helper:
     def ClientAI(self):
         api_key = config.OPENAI_API_KEY
         if not self.clientOpenAI:
-            self.clientOpenAI = AsyncOpenAI(api_key=api_key)
+            self.clientOpenAI = AsyncOpenAI(api_key=api_key, base_url= config.OPENAI_END_POINT)
         return self.clientOpenAI
 
     async def query_refiner(self,  query):
         config = ixapp.config
         model = config.openai_model
-        client:AsyncOpenAI = self.ClientAI()
+        client: AsyncOpenAI = self.ClientAI()
         conversation = self.conversation_string( self.data.messages, config.dialog_depth)
         response = await client.chat.completions.create(
             model=model,
