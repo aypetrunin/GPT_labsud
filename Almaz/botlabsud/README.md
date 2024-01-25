@@ -9,11 +9,31 @@
     python -m db.check_db
 5. запускаем бота
     python -m main_bot
+Если надо пересоздать БД, можно её просто удалить
 
+# Настройка переменных
+.env
+1. TG_BOT_TOKEN
+OPENAI_API_KEY= "sk-QW6yd17p3pC1qHEdcpBa*****"
+TG_TOKEN = "*****"
+2. Путь и подключение к БД
+database_path = "sqlite+aiosqlite:///c:/Data/DB/sqlite3/db_stag_labsud.sqlite3"
+3. Путь для хранения индексной БД
+index_path = "c:/Data/DB/index/labsud"
 
+## ixconfig.py
+содержит от куда надо загружать индексные БД
+
+# API
+1. Реализовать FastAPI
+2. Запуск АПИ
+uvicorn start_api:app --reload
+3. использование АПИ
+смотри api/readme.md
+    test/test_api.ipynb
+4. 
 # План для разработки
 1. скачиваем и загружаем индексную БД gptindex.gptutils
-    
 2. создаем бота и подгружаем базу
 3. подключаю бд для логирования запросов
 4. подключаю логер и через него веду логи

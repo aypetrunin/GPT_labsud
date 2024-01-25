@@ -3,7 +3,7 @@ from aiogram import filters, types, F
 from aiogram.fsm.context import FSMContext
 from bot.bot_constants import bot_constants
 from bot.gpt_bot import get_gpt_helper
-from db.botdb import BotDB
+from db.dbrequests import RequestsDB as BotDB
 
 
 @router.message(filters.Command("start"))

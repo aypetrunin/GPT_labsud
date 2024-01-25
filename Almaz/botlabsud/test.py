@@ -20,7 +20,7 @@ init_database(config.database_path)
 
 from db.db_test import Test
 t=Test()
-t.user_tg_id+=3+10+39+5
+t.db.user_tg_id+=3+10+39+5
 import asyncio
 async def main():
     await t.test1()

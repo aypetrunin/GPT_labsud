@@ -1,15 +1,16 @@
 from utils.initconf_env import config
 from utils.logger import logger
-logger.info("Start. Загружаем индексную БД")
 
+logger.info("Загружаем БД")
 from db.base import init_database
 init_database(config.database_path)
-logger.info("Загружаем БД")
+logger.info("Start. Загружаем индексную БД")
 from gptindex.ixapp import ixapp
 from bot.start_bot import bot_main
 import asyncio
 
 ixapp.init()
+logger.info("Start...")
 from db.base import database
 
 async def main():

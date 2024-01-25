@@ -5,7 +5,7 @@ from gptindex.ixapp import ixapp
 from  openai import AsyncOpenAI
 from datetime import datetime
 from bot.keyboard import create_rating_keyboard
-from db.botdb import BotDB, BotDBData
+from db.dbrequests import RequestsDB as BotDB, RequestsDBData as BotDBData
 from utils.logger import logger
 from gptindex.gptutils import num_tokens_from_string
 from config import config
@@ -27,6 +27,7 @@ class Gpt_helper:
         self.data:BotDBData = None
         self.db:BotDB = None #BotDB(self.message)
         self.d1 = datetime.now()
+        
     async def close(self):
         await self.db.close()
     async def get_data(self):
@@ -35,8 +36,9 @@ class Gpt_helper:
         else:
             self.context_data = {}
         d = self.context_data
-        self.data = BotDBData()
-        self.db= BotDB(self.message, self.data)
+        self.db= BotDB()
+        self.db.set_message(self.message)
+        self.data = self.db.data
         await self.db.update_user()
         if "messages" in d:
             self.data.messages = d["messages"]
@@ -84,14 +86,10 @@ class Gpt_helper:
             model=model,
             messages=[
                 {"role": "system",
-                 "content": config.refiner_prompt.replace('{conversation}', conversation).replace('{query}',query)},
+                 "content": config.refiner_prompt.format(conversation= conversation, query = query)},
                 {"role": "user", "content": f"{query}"}
             ],
-            temperature=0,
-            max_tokens=1256,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0)
+            temperature=0)
         u = response.usage
         self.prompt_tokens += u.prompt_tokens
         self.completion_tokens += u.completion_tokens

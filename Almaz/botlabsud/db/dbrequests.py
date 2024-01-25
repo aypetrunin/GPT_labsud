@@ -1,6 +1,6 @@
 from aiogram import types
 from db.base import async_session
-from db.models import User, UserMessage,  ErrorLog, Rating, now
+from db.models import User, UserMessage,  ErrorLog, Rating, now, TgUser, ApiUser
 from sqlalchemy import select, update, engine
 from sqlalchemy.sql import Executable
 from sqlalchemy.orm import aliased
@@ -9,8 +9,8 @@ from typing import Optional
 from utils.logger import logger
 from ixconfig import ixconfig
 from typing import Any
-
-class BotDBData:
+from sqlalchemy.ext.asyncio import AsyncSession
+class RequestsDBData:
     def __init__(self):
         self.quota = ixconfig.maxquota
         self.dt_startquota = now()
@@ -23,10 +23,23 @@ class BotDBData:
         self.dt_startquota = now()
 
 
-class BotDB:
-    def __init__(self, m: Optional[types.Message], d:BotDBData = None):
+class RequestsDB:
+    def __init__(self, d:RequestsDBData = None):
         self.dt = now()
-        self.message = m
+        self.message_id = 0
+        self.telegram_id = 0
+        self.chat_id = 0
+        self.user_id = 0
+        self.user_tg_id = 0
+        self.user_api_id = ""
+        self.user_first_name = ""
+        self.user_last_name = ""
+        self.username = 0
+        self.usermessage_id = 0
+        self.session:AsyncSession = async_session()
+        self.data = d
+        self.data = RequestsDBData()
+    def set_message(self,  m: types.Message):
         if m:
             self.message_id = m.message_id
             self.telegram_id = m.message_id
@@ -34,24 +47,19 @@ class BotDB:
             self.user_id = 0
             self.user_tg_id = m.from_user.id
             self.username = m.from_user.username
+            fu = m.from_user
+            self.user_first_name = fu.first_name
+            self.user_last_name = fu.last_name
+
             self.usermessage_id = 0
-        else:
-            self.message_id = 0
-            self.telegram_id = 0
-            self.chat_id = 0
-            self.user_id = 0
-            self.user_tg_id = 0
-            self.username = 0
-            self.usermessage_id = 0
-        self.session = async_session()
-        self.data = d
-        if d == None:
-            self.data = BotDBData()
 
     async def close(self):
         if self.session:
             await self.session.close()
             self.session = None
+
+    def open(self):
+        self.session = async_session()
 
     async def execute(self, stmt:Executable):
         """ stmt = update(User).where(User.tg_id == tg_user_id).values(dialog_state=dialog_state, dialog_score=dialog_score)
@@ -71,9 +79,10 @@ class BotDB:
 
     async def update_user(self):
         dt = now()
-        u=User
+        tu = TgUser
+        u = User
         q: engine.Result = await self.get(
-            select(u.id, u.quota, u.dt_startquota, u.dialog ).where(u.tg_id == self.user_tg_id)
+            select(tu.id, u.quota, u.dt_startquota, u.dialog).select_from(tu).join(u, u.id == tu.id).where(tu.tg_id == self.user_tg_id)
         )
         u = self
         data = u.data
@@ -81,12 +90,11 @@ class BotDB:
         if r:
             u.user_id, data.quota, data.dt_startquota, data.dialog = r
         else:
-            fu = self.message.from_user
             user = User(
-                tg_id=u.user_tg_id,
+                refid = f"tg:{u.user_tg_id}",
                 username=u.username,
-                first_name =  fu.first_name,
-                last_name = fu.last_name,
+                first_name =  u.user_first_name,
+                last_name = u.user_last_name,
                 # e_mail = fu.url,
                 quota = data.quota,
                 dt_startquota =dt,
@@ -94,10 +102,51 @@ class BotDB:
             )
             await self.add(user)
             self.user_id = user.id
+            tg = TgUser(
+                tg_id=u.user_tg_id,
+                id = self.user_id
+            )
+            await self.add(tg)
         if data.dt_startquota==None or (dt-data.dt_startquota).seconds > 10*3600:
             data.quota = ixconfig.maxquota
             data.dt_startquota = dt
         print(self.user_id)
+
+    async def update_apiuser(self):
+        dt = now()
+        au = ApiUser
+        u = User
+        q: engine.Result = await self.get(
+            select(au.id, u.quota, u.dt_startquota, u.dialog).select_from(au).join(u, u.id == au.id).where( au.api_id == self.user_api_id)
+        )
+        u = self
+        data = u.data
+        r = q.first()
+        if r:
+            u.user_id, data.quota, data.dt_startquota, data.dialog = r
+        else:
+            user = User(
+                refid = f"api:{u.user_api_id}",
+                username=u.username,
+                first_name =  u.user_first_name,
+                last_name = u.user_last_name,
+                # e_mail = fu.url,
+                quota = data.quota,
+                dt_startquota =dt,
+                dialog = data.dialog,
+            )
+            await self.add(user)
+            self.user_id = user.id
+            tg = ApiUser(
+                api_id=u.user_api_id,
+                id = self.user_id
+            )
+            await self.add(tg)
+        if data.dt_startquota==None or (dt-data.dt_startquota).seconds > 10*3600:
+            data.quota = ixconfig.maxquota
+            data.dt_startquota = dt
+        print(self.user_id)
+
 
     async def update_data(self):
         u = aliased(User,name="u")

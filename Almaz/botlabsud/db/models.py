@@ -14,8 +14,8 @@ class Base(AsyncAttrs, DeclarativeBase):
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, autoincrement=True)  # ID от Telegram
+    refid = Column(String(40))
     username = Column(String(80))
-    tg_id = Column(BigInteger, nullable=False, unique=True)
     e_mail = Column(String(80))
     first_name = Column(String(64))
     last_name = Column(String(64))
@@ -24,7 +24,15 @@ class User(Base):
     quota = Column(Integer)
     dialog = Column(Integer)
 
+class TgUser(Base):
+    __tablename__ = 'tgusers'
+    id = Column(Integer, primary_key=True, autoincrement=True)  # ID от Telegram
+    tg_id = Column(BigInteger, nullable=False, unique=True)
 
+class ApiUser(Base):
+    __tablename__ = 'apiusers'
+    id = Column(Integer, unique=True)  # ID от Telegram
+    api_id = Column(String(40), nullable=False, primary_key=True)
 
 class UserMessage(Base):
     __tablename__ = 'user_messages'
